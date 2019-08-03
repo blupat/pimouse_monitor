@@ -16,41 +16,118 @@ ls.subscribe(function(message){
 	}
 });
 
-var on = new ROSLIB.Service({
+var cmd = new ROSLIB.Service({
 	ros : ros,
-	name : '/motor_on',
-	messageType : 'std_srvs/Trigger'
+	name : '/pimouse_cmd',
+	messageType : 'pimouse_control/PiMouseCmd'
 });
 
-var off = new ROSLIB.Service({
-	ros : ros,
-	name : '/motor_off',
-	messageType : 'std_srvs/Trigger'
+var cmdOff = new ROSLIB.ServiceRequest({
+	on : false,
+	run : false,
+	face : false,
+	forward : 0.0,
+	rotation : 0.0
+});
+
+var cmdOn = new ROSLIB.ServiceRequest({
+	on : true,
+	run : false,
+	face : false,
+	forward : 0.0,
+	rotation : 0.0
+});
+
+var cmdRun = new ROSLIB.ServiceRequest({
+	on : true,
+	run : true,
+	face : false,
+	forward : 0.0,
+	rotation : 0.0
+});
+
+var cmdFace = new ROSLIB.ServiceRequest({
+	on : true,
+	run : false,
+	face : true,
+	forward : 0.0,
+	rotation : 0.0
 });
 
 var isOn = false;
-var intervalId;
+var isRun = false;
+var isFace = false;
 
-function pubMotorValues(){
+function cmdOnWithMotorValues(){
 	fw = document.getElementById('vel_fw').innerHTML;
 	rot = document.getElementById('vel_rot').innerHTML;
 	
-	fw = parseInt(fw) * 0.001;
-	rot = 3.141592 * parseInt(rot) / 180;
-	v = new ROSLIB.Message({linear:{x:fw,y:0,z:0}, angular:{x:0,y:0,z:rot}});
-	vel.publish(v)
+	cmdOn.forward = parseInt(fw) * 0.001;
+	cmdOn.rotation = 3.141592 * parseInt(rot) / 180;
+	cmd.callService(
+		cmdOn,
+		function(result){
+			if(result.isOk){
+				document.getElementById('motor_on').className = 'btn btn-danger';
+				document.getElementById('motor_run').className = 'btn btn-default';
+				document.getElementById('motor_face').className = 'btn btn-default';
+				document.getElementById('motor_off').className = 'btn btn-default';
+			}
+		}
+	);
 }
 
 document.getElementById('motor_on').addEventListener(
 	'click',
 	function(e){
 		isOn = true;
-		intervalId = setInterval(pubMotorValues, 100);
-		on.callService(
-			ROSLIB.ServiceRequest(), 
+		isRun = false;
+		isFace = false;
+		cmdOnWithMotorValues();
+	}
+);
+
+document.getElementById('motor_run').addEventListener(
+	'click',
+	function(e){
+		if(!isOn){
+			return;
+		}
+		isRun = true;
+		isFace = false;
+		document.getElementById('vel_fw').innerHTML = 0;
+		document.getElementById('vel_rot').innerHTML = 0;
+		cmd.callService(
+			cmdRun,
 			function(result){
-				if(result.success){
-					document.getElementById('motor_on').className = 'btn btn-danger';
+				if(result.isOk){
+					document.getElementById('motor_on').className = 'btn btn-default';
+					document.getElementById('motor_run').className = 'btn btn-danger';
+					document.getElementById('motor_face').className = 'btn btn-default';
+					document.getElementById('motor_off').className = 'btn btn-default';
+				}
+			}
+		);
+	}
+);
+
+document.getElementById('motor_face').addEventListener(
+	'click',
+	function(e){
+		if(!isOn){
+			return;
+		}
+		isRun = false;
+		isFace = true;
+		document.getElementById('vel_fw').innerHTML = 0;
+		document.getElementById('vel_rot').innerHTML = 0;
+		cmd.callService(
+			cmdFace,
+			function(result){
+				if(result.isOk){
+					document.getElementById('motor_on').className = 'btn btn-default';
+					document.getElementById('motor_run').className = 'btn btn-default';
+					document.getElementById('motor_face').className = 'btn btn-danger';
 					document.getElementById('motor_off').className = 'btn btn-default';
 				}
 			}
@@ -62,17 +139,19 @@ document.getElementById('motor_off').addEventListener(
 	'click',
 	function(e){
 		if(isOn){
-			clearInterval(intervalId);
 			document.getElementById('vel_fw').innerHTML = 0;
 			document.getElementById('vel_rot').innerHTML = 0;
-			pubMotorValues();
 			isOn = false;
+			isRun = false;
+			isFace = false;
 		}
-		off.callService(
-			ROSLIB.ServiceRequest(), 
+		cmd.callService(
+			cmdOff,
 			function(result){
-				if(result.success){
+				if(result.isOk){
 					document.getElementById('motor_on').className = 'btn btn-default';
+					document.getElementById('motor_run').className = 'btn btn-default';
+					document.getElementById('motor_face').className = 'btn btn-default';
 					document.getElementById('motor_off').className = 'btn btn-primary';
 				}
 			}
@@ -80,16 +159,10 @@ document.getElementById('motor_off').addEventListener(
 	}
 );
 
-var vel = new ROSLIB.Topic({
-	ros : ros,
-	name : '/cmd_vel',
-	messageType : 'geometry_msgs/Twist'
-});
-
 document.getElementById('touchmotion').addEventListener(
 	'click',
 	function(e){
-		if(!isOn){
+		if(!isOn || isRun || isFace){
 			return;
 		}
 		rect = $('#touchmotion')[0].getBoundingClientRect();
@@ -100,9 +173,11 @@ document.getElementById('touchmotion').addEventListener(
 		vel_rot = rect.width / 2 - x;
 		document.getElementById('vel_fw').innerHTML = parseInt(vel_fw);
 		document.getElementById('vel_rot').innerHTML = parseInt(vel_rot);
+
+		cmdOnWithMotorValues();
 	}
 );
 
 document.getElementById('camstream').data = 'http://'
 	+ location.hostname
-	+ ':10000/stream?topic=/cv_camera_node/image_raw';
+	+ ':10000/stream?topic=/face';
