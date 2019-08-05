@@ -168,7 +168,13 @@ document.getElementById('touchmotion').addEventListener(
 		rect = $('#touchmotion')[0].getBoundingClientRect();
 		x = e.pageX - rect.left - window.pageXOffset;
 		y = e.pageY - rect.top - window.pageYOffset;
-		
+
+		if((x >= (rect.width * 48 / 100)) && (x < (rect.width * 52 / 100))){
+			x = rect.width / 2;
+		}
+		if((y >= (rect.height * 48 / 100)) && (y < (rect.height * 52 / 100))){
+			y = rect.height / 2;
+		}
 		vel_fw = (rect.height / 2 - y) * 3;
 		vel_rot = rect.width / 2 - x;
 		document.getElementById('vel_fw').innerHTML = parseInt(vel_fw);

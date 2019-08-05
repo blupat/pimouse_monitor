@@ -47,24 +47,40 @@
 					<button type="button" class="btn btn-danger" id="motor_face">FACE</button>
 					<button type="button" class="btn btn-primary" id="motor_off">OFF</button>
 					</h2>
-					<div id="touchmotion" class="card card-body bg-light" style="width:300px;height:300px;cursor:pointer">
-						<div class="container">
-							<div class="row">
-								<div class="col">
-									<span id="vel_fw">0</span>
-								</div>
-								<div class="col">
-									[mm/s]
-								</div>
-							</div>
-							<div class="row">
-								<div class="col">
-									<span id="vel_rot">0</span>
-								</div>
-								<div class="col">
-									[deg/s]
-								</div>
-							</div>
+					<div id="touchmotion" class="card-group" style="width:300px;height:300px;cursor:pointer">
+						<div class="card">
+							<ul class="list-group list-group-flush h-100">
+								<li class="list-group-item h-50 bg-light">
+									<div class="container">
+										<div class="row">
+											<div class="col">
+												<span id="vel_fw">0</span>
+											</div>
+											<div class="col">
+												[mm/s]
+											</div>
+										</div>
+										<div class="row">
+											<div class="col">
+												<span id="vel_rot">0</span>
+											</div>
+											<div class="col">
+												[deg/s]
+											</div>
+										</div>
+									</div>
+								</li>
+								<li class="list-group-item h-50 bg-light">
+								</li>
+							</ul>
+						</div>
+						<div class="card">
+							<ul class="list-group list-group-flush h-100">
+								<li class="list-group-item h-50 bg-light">
+								</li>
+								<li class="list-group-item h-50 bg-light">
+								</li>
+							</ul>
 						</div>
 					</div>
 				</div>
